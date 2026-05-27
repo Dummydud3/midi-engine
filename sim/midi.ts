@@ -1,5 +1,5 @@
 /// <reference path="./sim.d.ts" />
-/// <reference path="../smf.ts" />
+/// <reference path="./smf.ts" />
 
 namespace pxsim.midi {
     type VoiceMap = { [key: string]: ActiveVoice[] };
