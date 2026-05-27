@@ -12,5 +12,3 @@ declare namespace pxsim {
         const AudioToneSource: any;
     }
 }
-
-declare function setTimeout(handler: () => void, timeout?: number): any;
