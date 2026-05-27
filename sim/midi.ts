@@ -8,6 +8,31 @@ namespace pxsim.midi {
         gain: any;
     }
 
+    /** Minimal thenable for //% promise shims (no Promise lib in extension sim). */
+    function simPromise(completer: (done: () => void) => void): any {
+        const p: any = {};
+        p.then = function (onFulfilled: () => void) {
+            completer(onFulfilled);
+            return p;
+        };
+        return p;
+    }
+
+    function resolvedPromise(): any {
+        return simPromise((done) => done());
+    }
+
+    function globalObj(): any {
+        if (typeof globalThis !== "undefined") return globalThis;
+        if (typeof self !== "undefined") return self;
+        return {};
+    }
+
+    function getAudioContextManager(): any {
+        const px: any = typeof pxsim !== "undefined" ? pxsim : undefined;
+        return px && px.AudioContextManager;
+    }
+
     class MidiSynth {
         protected voices: VoiceMap;
         protected masterGain: any;
@@ -23,7 +48,7 @@ namespace pxsim.midi {
 
         setVolume(v: number) {
             this.volume = Math.max(0, Math.min(1, v / 100));
-            if (this.masterGain) {
+            if (this.masterGain && this.ctx) {
                 this.masterGain.gain.setValueAtTime(this.volume, this.ctx.currentTime);
             }
         }
@@ -39,19 +64,26 @@ namespace pxsim.midi {
         protected ensureContext() {
             if (this.ctx) return;
             this.ctx = this.createContext();
+            if (!this.ctx) return;
             this.destination = this.ctx.destination;
             this.masterGain = this.ctx.createGain();
             this.masterGain.gain.value = this.volume;
             this.masterGain.connect(this.destination);
-            if (this.ctx.state === "suspended") {
+            if (this.ctx.state === "suspended" && this.ctx.resume) {
                 this.ctx.resume();
             }
         }
 
         protected createContext(): any {
-            const w = window as any;
-            const AC = w.AudioContext || w.webkitAudioContext;
-            return new AC();
+            const g = globalObj();
+            const root = g["window"] || g;
+            const AC = root.AudioContext || root.webkitAudioContext;
+            if (!AC) return undefined;
+            try {
+                return new AC();
+            } catch (e) {
+                return undefined;
+            }
         }
 
         protected voiceKey(channel: number, note: number) {
@@ -60,6 +92,7 @@ namespace pxsim.midi {
 
         protected noteOn(channel: number, note: number, velocity: number, when: number) {
             this.ensureContext();
+            if (!this.ctx) return;
             const key = this.voiceKey(channel, note);
             const osc = this.ctx.createOscillator();
             const gain = this.ctx.createGain();
@@ -105,23 +138,27 @@ namespace pxsim.midi {
             }
         }
 
-        playAsync(song: RefBuffer): Promise<void> {
+        playAsync(song: any): any {
             this.stop();
             this.cancelled = false;
             this.ensureContext();
+            if (!this.ctx) return resolvedPromise();
 
             const parsed = midismf.parseSmf(song);
             if (!parsed.events.length) {
-                return Promise.resolve();
+                return resolvedPromise();
             }
 
-            if (this.ctx.state === "suspended") {
-                return this.ctx.resume().then(() => this.schedule(parsed));
+            if (this.ctx.state === "suspended" && this.ctx.resume) {
+                const resumed = this.ctx.resume();
+                if (resumed && typeof resumed.then === "function") {
+                    return resumed.then(() => this.schedule(parsed));
+                }
             }
             return this.schedule(parsed);
         }
 
-        protected schedule(parsed: midismf.ParsedSong): Promise<void> {
+        protected schedule(parsed: midismf.ParsedSong): any {
             const start = this.ctx.currentTime + 0.05;
             const endMs = parsed.durationMs;
 
@@ -135,14 +172,14 @@ namespace pxsim.midi {
                 }
             }
 
-            return new Promise<void>(resolve => {
-                const waitMs = endMs + 100;
+            const waitMs = endMs + 100;
+            return simPromise((done) => {
                 setTimeout(() => {
                     if (!this.cancelled) {
                         this.stop();
                         this.cancelled = false;
                     }
-                    resolve();
+                    done();
                 }, waitMs);
             });
         }
@@ -159,20 +196,24 @@ namespace pxsim.midi {
     function setupOnStopAll() {
         if (onStopAllSetup) return;
         onStopAllSetup = true;
-        pxsim.AudioContextManager.onStopAll(() => {
-            if (synth) synth.stop();
-        });
+        const acm = getAudioContextManager();
+        if (acm && acm.onStopAll) {
+            acm.onStopAll(() => {
+                if (synth) synth.stop();
+            });
+        }
     }
 
-    export function _playSongAsync(song: RefBuffer): Promise<void> {
+    export function _playSongAsync(song: any): any {
         setupOnStopAll();
-        if (!song || !song.data || !song.data.length) return Promise.resolve();
+        if (!song || !song.data || !song.data.length) return resolvedPromise();
         return getSynth().playAsync(song);
     }
 
     export function _stopSong() {
         if (synth) synth.stop();
-        pxsim.AudioContextManager.muteAllChannels();
+        const acm = getAudioContextManager();
+        if (acm && acm.muteAllChannels) acm.muteAllChannels();
     }
 
     export function _setVolume(volume: number) {
