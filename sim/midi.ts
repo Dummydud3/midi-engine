@@ -22,17 +22,46 @@ namespace pxsim.midi {
         return simPromise((done) => done());
     }
 
-    function envRoot(): any {
-        try {
-            const fn: any = Function;
-            if (fn) return fn("return this")();
-        } catch (e) { }
-        return {};
-    }
-
     function getAudioContextManager(): any {
         const px: any = typeof pxsim !== "undefined" ? pxsim : undefined;
         return px && px.AudioContextManager;
+    }
+
+    let sharedCtx: any;
+
+    /** Lazy-init shared AudioContext via pxsim AudioContextManager (no private AC). */
+    function initSharedContext(): any {
+        if (sharedCtx) return sharedCtx;
+        const acm = getAudioContextManager();
+        if (!acm) return undefined;
+        if (acm.setListenerPosition) {
+            acm.setListenerPosition(0, 0, 0);
+        } else if (acm.mute) {
+            acm.mute(!!(acm.isMuted && acm.isMuted()));
+        }
+        if (acm.createSpatialAudioPlayer) {
+            const id = acm.createSpatialAudioPlayer();
+            const players = acm["SpatialAudioPlayer"];
+            const player = players && players["getPlayerById"] && players["getPlayerById"](id);
+            if (player) {
+                sharedCtx = player["context"];
+                if (player.dispose) player.dispose();
+            }
+        }
+        if (!sharedCtx) {
+            const toneCls = acm["AudioToneSource"];
+            if (toneCls && acm.tone) {
+                if (!toneCls["instance"]) {
+                    try {
+                        acm.tone(1, 0);
+                    } catch (e) { }
+                }
+                const inst = toneCls["instance"];
+                const vca = inst && inst["vca"];
+                if (vca && vca["context"]) sharedCtx = vca["context"];
+            }
+        }
+        return sharedCtx;
     }
 
     class MidiSynth {
@@ -65,26 +94,14 @@ namespace pxsim.midi {
 
         protected ensureContext() {
             if (this.ctx) return;
-            this.ctx = this.createContext();
+            this.ctx = initSharedContext();
             if (!this.ctx) return;
-            this.destination = this.ctx.destination;
+            this.destination = this.ctx["destination"];
             this.masterGain = this.ctx.createGain();
             this.masterGain.gain.value = this.volume;
             this.masterGain.connect(this.destination);
             if (this.ctx.state === "suspended" && this.ctx.resume) {
                 this.ctx.resume();
-            }
-        }
-
-        protected createContext(): any {
-            const g = envRoot();
-            const root = g["window"] || g;
-            const AC = root.AudioContext || root.webkitAudioContext;
-            if (!AC) return undefined;
-            try {
-                return new AC();
-            } catch (e) {
-                return undefined;
             }
         }
 
