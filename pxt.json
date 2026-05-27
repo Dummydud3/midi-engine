@@ -1,0 +1,22 @@
+{
+    "name": "midi-engine",
+    "description": "Simulator MIDI music engine - play Standard MIDI Files in the Arcade simulator",
+    "version": "0.1.0",
+    "license": "MIT",
+    "files": [
+        "README.md",
+        "midi.ts",
+        "smf.ts",
+        "midi.cpp"
+    ],
+    "testFiles": [
+        "test.ts"
+    ],
+    "simFiles": [
+        "smf.ts"
+    ],
+    "public": true,
+    "dependencies": {
+        "core": "file:../pxt-common-packages/libs/core"
+    }
+}

@@ -1,0 +1,27 @@
+﻿# Node / tooling
+node_modules/
+npm-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+
+# MakeCode / PXT
+.pxt/
+built/
+libs/
+yotta/
+yotta_modules/
+yotta_targets/
+*.user
+*.suo
+.DS_Store
+Thumbs.db
+
+# Env / secrets
+.env
+.env.*
+*.pem
+credentials.json
+
+# IDE
+.vscode/
+.idea/
