@@ -46,7 +46,7 @@ namespace midismf {
         return s;
     }
 
-    function readChunk(data: number[], offset: number): { type: string; length: number; dataStart: number; next: number } {
+    function readChunk(data: number[], offset: number): { type: string; length: number; dataStart: number; next: number } | undefined {
         if (offset + 8 > data.length) return undefined;
         const type = readFourCC(data, offset);
         const length = readU32BE(data, offset + 4);
@@ -136,7 +136,7 @@ namespace midismf {
         return maxEndMs;
     }
 
-    function bufferToBytes(buffer: any): number[] {
+    function bufferToBytes(buffer: any): number[] | undefined {
         if (!buffer) return undefined;
         if (buffer.data && buffer.data.length) {
             return buffer.data as number[];
