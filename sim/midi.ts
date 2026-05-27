@@ -22,26 +22,19 @@ namespace pxsim.midi {
         return simPromise((done) => done());
     }
 
-    function getAudioContextManager(): any {
-        const px: any = typeof pxsim !== "undefined" ? pxsim : undefined;
-        return px && px.AudioContextManager;
-    }
-
     let sharedCtx: any;
 
-    /** Lazy-init shared AudioContext via pxsim AudioContextManager (no private AC). */
+    /** Lazy-init shared AudioContext via simulator AudioContextManager (no private AC). */
     function initSharedContext(): any {
         if (sharedCtx) return sharedCtx;
-        const acm = getAudioContextManager();
-        if (!acm) return undefined;
-        if (acm.setListenerPosition) {
-            acm.setListenerPosition(0, 0, 0);
-        } else if (acm.mute) {
-            acm.mute(!!(acm.isMuted && acm.isMuted()));
+        if (AudioContextManager.setListenerPosition) {
+            AudioContextManager.setListenerPosition(0, 0, 0);
+        } else if (AudioContextManager.mute) {
+            AudioContextManager.mute(!!(AudioContextManager.isMuted && AudioContextManager.isMuted()));
         }
-        if (acm.createSpatialAudioPlayer) {
-            const id = acm.createSpatialAudioPlayer();
-            const players = acm["SpatialAudioPlayer"];
+        if (AudioContextManager.createSpatialAudioPlayer) {
+            const id = AudioContextManager.createSpatialAudioPlayer();
+            const players = AudioContextManager["SpatialAudioPlayer"];
             const player = players && players["getPlayerById"] && players["getPlayerById"](id);
             if (player) {
                 sharedCtx = player["context"];
@@ -49,11 +42,11 @@ namespace pxsim.midi {
             }
         }
         if (!sharedCtx) {
-            const toneCls = acm["AudioToneSource"];
-            if (toneCls && acm.tone) {
+            const toneCls = AudioContextManager["AudioToneSource"];
+            if (toneCls && AudioContextManager.tone) {
                 if (!toneCls["instance"]) {
                     try {
-                        acm.tone(1, 0);
+                        AudioContextManager.tone(1, 0);
                     } catch (e) { }
                 }
                 const inst = toneCls["instance"];
@@ -215,9 +208,8 @@ namespace pxsim.midi {
     function setupOnStopAll() {
         if (onStopAllSetup) return;
         onStopAllSetup = true;
-        const acm = getAudioContextManager();
-        if (acm && acm.onStopAll) {
-            acm.onStopAll(() => {
+        if (AudioContextManager.onStopAll) {
+            AudioContextManager.onStopAll(() => {
                 if (synth) synth.stop();
             });
         }
@@ -231,8 +223,7 @@ namespace pxsim.midi {
 
     export function _stopSong() {
         if (synth) synth.stop();
-        const acm = getAudioContextManager();
-        if (acm && acm.muteAllChannels) acm.muteAllChannels();
+        if (AudioContextManager.muteAllChannels) AudioContextManager.muteAllChannels();
     }
 
     export function _setVolume(volume: number) {
