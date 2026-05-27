@@ -27,7 +27,7 @@ namespace pxsim.midi {
 
     /** Lazy-init shared AudioContext via simulator AudioContextManager (no private AC). */
     function initSharedContext(): any {
-        const acm = pxsim.AudioContextManager;
+        const acm = AudioContextManager;
         if (sharedCtx) return sharedCtx;
         if (acm.setListenerPosition) {
             acm.setListenerPosition(0, 0, 0);
@@ -158,7 +158,7 @@ namespace pxsim.midi {
             this.ensureContext();
             if (!this.ctx) return resolvedPromise();
 
-            const parsed = midismf.parseSmf(song);
+            const parsed = parseSmf(song);
             if (!parsed.events.length) {
                 return resolvedPromise();
             }
@@ -172,7 +172,7 @@ namespace pxsim.midi {
             return this.schedule(parsed);
         }
 
-        protected schedule(parsed: midismf.ParsedSong): any {
+        protected schedule(parsed: ParsedSong): any {
             const start = this.ctx.currentTime + 0.05;
             const endMs = parsed.durationMs;
 
@@ -210,7 +210,7 @@ namespace pxsim.midi {
     function setupOnStopAll() {
         if (onStopAllSetup) return;
         onStopAllSetup = true;
-        const acm = pxsim.AudioContextManager;
+        const acm = AudioContextManager;
         if (acm.onStopAll) {
             acm.onStopAll(() => {
                 if (synth) synth.stop();
@@ -226,7 +226,7 @@ namespace pxsim.midi {
 
     export function _stopSong() {
         if (synth) synth.stop();
-        const acm = pxsim.AudioContextManager;
+        const acm = AudioContextManager;
         if (acm.muteAllChannels) acm.muteAllChannels();
     }
 

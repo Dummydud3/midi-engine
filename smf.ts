@@ -4,7 +4,6 @@
  *
  * MakeCode note: avoid Uint8Array in user-side TypeScript; use number[] / Buffer.
  */
-namespace midismf {
     export interface NoteEvent {
         timeMs: number;
         type: "noteOn" | "noteOff";
@@ -203,4 +202,3 @@ namespace midismf {
 
         return { events: events, durationMs: durationMs };
     }
-}
