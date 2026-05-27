@@ -13,10 +13,14 @@
         "test.ts"
     ],
     "simFiles": [
-        "smf.ts"
+        "smf.ts",
+        "sim/midi.ts"
     ],
     "public": true,
     "dependencies": {
-        "core": "file:../pxt-common-packages/libs/core"
-    }
+        "core": "*"
+    },
+    "supportedTargets": [
+        "arcade"
+    ]
 }
