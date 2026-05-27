@@ -16,9 +16,14 @@
         "test.ts"
     ],
     "public": true,
+    "targetVersions": {
+        "target": "4.0.14",
+        "targetId": "arcade"
+    },
     "supportedTargets": [
         "arcade"
     ],
+    "preferredEditor": "tsprj",
     "simFiles": [
         "sim/midi.ts"
     ]
