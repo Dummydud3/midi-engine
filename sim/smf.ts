@@ -3,20 +3,8 @@
  * Converts delta ticks to milliseconds using tempo meta events (default 120 BPM).
  *
  * MakeCode note: avoid Uint8Array in user-side TypeScript; use number[] / Buffer.
+ * PXT: top-level functions only here; ParsedSong/NoteEvent types live in sim/midi.ts namespace.
  */
-interface NoteEvent {
-    timeMs: number;
-    type: "noteOn" | "noteOff";
-    channel: number;
-    note: number;
-    velocity: number;
-}
-
-interface ParsedSong {
-    events: NoteEvent[];
-    durationMs: number;
-}
-
 function readU32BE(data: number[], offset: number): number {
     return ((data[offset] << 24) | (data[offset + 1] << 16) | (data[offset + 2] << 8) | data[offset + 3]) >>> 0;
 }
@@ -64,7 +52,7 @@ function parseTrack(
     end: number,
     division: number,
     initialTempoUs: number,
-    out: NoteEvent[]
+    out: { timeMs: number; type: "noteOn" | "noteOff"; channel: number; note: number; velocity: number }[]
 ): number {
     let pos = start;
     let tick = 0;
@@ -149,13 +137,13 @@ function bufferToBytes(buffer: any): number[] | undefined {
     return out;
 }
 
-function parseSmf(buffer: any): ParsedSong {
+function parseSmf(buffer: any): { events: { timeMs: number; type: "noteOn" | "noteOff"; channel: number; note: number; velocity: number }[]; durationMs: number } {
     const data = bufferToBytes(buffer);
     if (!data || !data.length) {
         return { events: [], durationMs: 0 };
     }
 
-    const events: NoteEvent[] = [];
+    const events: { timeMs: number; type: "noteOn" | "noteOff"; channel: number; note: number; velocity: number }[] = [];
 
     const header = readChunk(data, 0);
     if (!header || header.type !== "MThd" || header.length < 6) {

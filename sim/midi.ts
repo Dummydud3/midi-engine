@@ -9,6 +9,20 @@ namespace pxsim.midi {
         gain: any;
     }
 
+
+    interface NoteEvent {
+        timeMs: number;
+        type: "noteOn" | "noteOff";
+        channel: number;
+        note: number;
+        velocity: number;
+    }
+
+    interface ParsedSong {
+        events: NoteEvent[];
+        durationMs: number;
+    }
+
     /** Minimal thenable for //% promise shims (no Promise lib in extension sim). */
     function simPromise(completer: (done: () => void) => void): any {
         const p: any = {};
