@@ -5,5 +5,10 @@
         "outDir": "built",
         "rootDir": "."
     },
+    "include": [
+        "midi.ts",
+        "test.ts",
+        "sim/**/*.ts"
+    ],
     "exclude": ["pxt_modules/**/*test.ts"]
 }

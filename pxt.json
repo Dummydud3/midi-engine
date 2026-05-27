@@ -20,6 +20,7 @@
     ],
     "preferredEditor": "tsprj",
     "simFiles": [
+        "sim/sim.d.ts",
         "sim/smf.ts",
         "sim/midi.ts"
     ]
