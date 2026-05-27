@@ -22,9 +22,11 @@ namespace pxsim.midi {
         return simPromise((done) => done());
     }
 
-    function globalObj(): any {
-        if (typeof globalThis !== "undefined") return globalThis;
-        if (typeof self !== "undefined") return self;
+    function envRoot(): any {
+        try {
+            const fn: any = Function;
+            if (fn) return fn("return this")();
+        } catch (e) { }
         return {};
     }
 
@@ -75,7 +77,7 @@ namespace pxsim.midi {
         }
 
         protected createContext(): any {
-            const g = globalObj();
+            const g = envRoot();
             const root = g["window"] || g;
             const AC = root.AudioContext || root.webkitAudioContext;
             if (!AC) return undefined;
