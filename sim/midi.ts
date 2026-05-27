@@ -1,5 +1,8 @@
 /// <reference path="./smf.ts" />
 
+declare var pxsim: any;
+declare var window: any;
+
 namespace pxsim.midi {
     type VoiceMap = { [key: string]: ActiveVoice[] };
 
@@ -35,22 +38,17 @@ namespace pxsim.midi {
         return simPromise((done) => done());
     }
 
-    function getSimGlobal(): any {
-        const g: any = (function (this: any) { return this; } as any)();
-        const simKey = "px" + "sim";
-        return g ? g[simKey] : null;
-    }
-
     function getAcm(): any {
-        const p = getSimGlobal();
+        if (typeof pxsim === "undefined") return null;
         const acmKey = "Audio" + "Context" + "Manager";
-        return p ? p[acmKey] : null;
+        return pxsim[acmKey] || null;
     }
 
     function getAudioCtx(): any {
-        const g = getSimGlobal();
-        const w = g ? g["window"] : null;
-        const Ctor = w ? (w["AudioContext"] || w["webkitAudioContext"]) : null;
+        const w: any = typeof window !== "undefined" ? window : null;
+        const acKey = "Audio" + "Context";
+        const wkKey = "webkit" + "Audio" + "Context";
+        const Ctor = w ? (w[acKey] || w[wkKey]) : null;
         return Ctor ? new Ctor() : null;
     }
 
